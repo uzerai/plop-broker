@@ -1,0 +1,14 @@
+import React from 'react';
+import { Formik } from 'formik';
+import { {{kebabCase name}}InitialValues, {{kebabCase name}}ValidationSchema} from './{{{kebabCase name}}}FormikSetup'
+
+class {{{name}}} extends React.Component {
+
+render() {
+return <Formik validationSchema={ {{kebabCase name}}ValidationSchema} initialValues={
+    {{kebabCase name}}InitialValues()}>
+    {() => <div>Hello world</div>}</Formik>;
+}
+};
+
+export default {{{name}}};
