@@ -53,6 +53,7 @@ server.post('/create-app', (req, res) => {
 
   const { appName } = req.body;
   if ( appName ) {
+    appName = appName.replace(/ /g, "_");
     // hardcoded generator -- can be changed.
     const generator = plop.getGenerator('HelloWorld');
 
@@ -82,7 +83,7 @@ server.post('/create-app', (req, res) => {
         const githubUser = githubConnector.getUser();
         // initialize repo
         githubUser.createRepo({
-          name: appName,
+          name: `${appName}`,
           description: "This was created by SKOOF.",
           private: false,
           has_wiki: false
