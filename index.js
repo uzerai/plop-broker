@@ -59,6 +59,7 @@ server.post('/create-app', (req, res) => {
 
     generator.runActions({
       appName: formattedAppName,
+      type: req.body.type
     }).then(results => {
       if ( Array.isArray(results.failures) && (results.failures.length > 0)) {
         console.error("ERROR CREATING")
