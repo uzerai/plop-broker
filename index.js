@@ -53,7 +53,7 @@ server.post('/create-app', (req, res) => {
 
   const { appName } = req.body;
   if ( appName ) {
-    appName = appName.replace(/ /g, "_");
+    const formattedAppName = appName.replace(/ /g, "_");
     // hardcoded generator -- can be changed.
     const generator = plop.getGenerator('HelloWorld');
 
@@ -71,8 +71,8 @@ server.post('/create-app', (req, res) => {
          *             GITLAB HANDLING.
          * ###############################################
          */
-        const simpleGit = require('simple-git')(`./temp/${appName}`)
-        const projectRepo = `${GITHUB_URL}:${GITHUB_USER}/${appName}.git`;
+        const simpleGit = require('simple-git')(`./temp/${formattedAppName}`)
+        const projectRepo = `${GITHUB_URL}:${GITHUB_USER}/${formattedAppName}.git`;
 
         console.log(`Pushing created repo to ${projectRepo}`)
         const githubConnector = new GitHub({
@@ -83,7 +83,7 @@ server.post('/create-app', (req, res) => {
         const githubUser = githubConnector.getUser();
         // initialize repo
         githubUser.createRepo({
-          name: `${appName}`,
+          name: `${formattedAppName}`,
           description: "This was created by SKOOF.",
           private: false,
           has_wiki: false
