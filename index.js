@@ -53,11 +53,13 @@ server.post('/create-app', (req, res) => {
 
   const { appName } = req.body;
   if ( appName ) {
-    const formattedAppName = appName.replace(/ /g, "_");
+    const formattedAppName = appName.replace(/ /g, "-");
     // hardcoded generator -- can be changed.
     const generator = plop.getGenerator('HelloWorld');
 
-    generator.runActions(req.body).then(results => {
+    generator.runActions({
+      appName: formattedAppName,
+    }).then(results => {
       if ( Array.isArray(results.failures) && (results.failures.length > 0)) {
         console.error("ERROR CREATING")
         console.log(results.failures);
