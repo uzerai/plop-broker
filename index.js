@@ -53,7 +53,7 @@ server.post('/create-app', (req, res) => {
 
   const { appName } = req.body;
   if ( appName ) {
-    const formattedAppName = appName.replace(/ /g, "-");
+    const formattedAppName = appName.replace(/ /g, "-").toLowerCase();
     // hardcoded generator -- can be changed.
     const generator = plop.getGenerator('HelloWorld');
 
@@ -115,6 +115,7 @@ server.post('/create-app', (req, res) => {
           console.log("ERROR:");
           console.log(error);
         });
+
       }
     });
   } else {
