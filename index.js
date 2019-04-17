@@ -24,6 +24,8 @@ const plop = nodePlop('./plopfile.js');
 // Github required
 const GitHub = require('github-api');
 
+// child process spawner.
+const { execSync } = require('child_process');
 
 /**
  * ###############################################
@@ -39,7 +41,7 @@ server.use(express.json());
  * ###############################################
  */
 // Base path get request.
-server.get('/', (req, res)  => {
+server.get('/', (req, res) => {
   res.status(200).send({
     "success": true,
     "message": `Version 0.0.1 - ${process.env.APP_NAME} - Running.`
@@ -47,81 +49,128 @@ server.get('/', (req, res)  => {
 })
 
 // Test request.
-server.post('/create-app', (req, res) => {
-  console.log("[ /create-app ] Received:");
+server.post('/create-app', async (req, res) => {
+
+  // Receive request.
+  console.info("[ /create-app ] Received:");
   console.log(req.body);
-
-  const { appName } = req.body;
-  if ( appName ) {
+  const { appName, appType } = req.body;
+  if (appName) {
     const formattedAppName = appName.replace(/ /g, "-").toLowerCase();
-    // hardcoded generator -- can be changed.
-    const generator = plop.getGenerator('HelloWorld');
+    const formattedAppType = appType.replace(/ /g, "-").toLowerCase();
 
-    generator.runActions({
-      appName: formattedAppName,
-      type: req.body.appType
-    }).then(results => {
-      if ( Array.isArray(results.failures) && (results.failures.length > 0)) {
-        console.error("ERROR CREATING")
-        console.log(results.failures);
-        res.status(500).send({
-          success: false,
-          message: "Application creation failed, I think the monkeys at JLR-DDC did something silly."
+    /**
+     * ###############################################
+     *             PROJECT GENERATION.
+     * ###############################################
+     */
+    // ::Flag:: to make sure we don't push up empty/non-existent projects.
+    let appCreated = false;
+    switch (formattedAppType) {
+      case "react":
+        console.info("INFO: appType has been identified as react.")
+        // We run create-react-app when type is react.
+
+        execSync(`npx create-react-app ./temp/${formattedAppName}`, {
+          cwd: './',
+          env: process.env
         });
-      } else {
-        /**
-         * ###############################################
-         *             GITLAB HANDLING.
-         * ###############################################
-         */
-        const simpleGit = require('simple-git')(`./temp/${formattedAppName}`)
-        const projectRepo = `${GITHUB_URL}:${GITHUB_USER}/${formattedAppName}.git`;
+        break;
+      case "spring":
+        console.info("INFO: appType has been identified as spring.");
+        break;
+      default:
+        console.info("INFO: appType not identified. Generating HelloWorld.");
+        const generator = plop.getGenerator('HelloWorld');
+        try {
+          await generator.runActions({
+            appName: formattedAppName,
+            type: appType
+          }).then(results => {
+            if (Array.isArray(results.failures) && (results.failures.length > 0)) {
+              throw Error(`ERROR: GENERATION ERROR:` + JSON.stringify(results.failures));
+            }
+          }).catch(err => { throw err; });
 
-        console.log(`Pushing created repo to ${projectRepo}`)
-        const githubConnector = new GitHub({
-          username: GITHUB_USER,
-          token: GITHUB_TOKEN
-        });
+          console.info(`INFO: Creation of project ${formattedAppName} completed.`)
+          appCreated = true;
+        } catch (err) {
+          console.error(err);
+          res.status(500).send({
+            success: false,
+            message: "Application creation failed, I think the monkeys at JLR-DDC did something silly."
+          });
+        }
+    }
 
-        const githubUser = githubConnector.getUser();
-        // initialize repo
-        githubUser.createRepo({
-          name: `${formattedAppName}`,
-          description: "This was created by SKOOF.",
-          private: false,
-          has_wiki: false
-        }).then((response) => {
-          const { html_url, ssh_url } = response.data;
+    if (appCreated) {
+      /**
+       * ###############################################
+       *             GITLAB HANDLING.
+       * ###############################################
+       */
+      const simpleGit = require('simple-git')(`./temp/${formattedAppName}`)
+      const projectRepo = `${GITHUB_URL}:${GITHUB_USER}/${formattedAppName}.git`;
 
-          // Push the repository.
+      console.info(`INFO: AUTHENTICATING WITH GITHUB`);
+      const githubConnector = new GitHub({
+        username: GITHUB_USER,
+        token: GITHUB_TOKEN
+      });
+      console.info(`INFO: Creating repository ${projectRepo}`);
+
+      const githubUser = githubConnector.getUser();
+      // initialize repo
+      await githubUser.createRepo({
+        name: `${formattedAppName}`,
+        description: "This was created by PLOP-SKOOF.",
+        private: false,
+        has_wiki: false
+      }).then((response) => {
+        console.info(`INFO: Repository created; pushing...`);
+        const { html_url, ssh_url } = response.data;
+
+        // Push the repository.
+        try {
           simpleGit.init().add('.').commit("initial commit").push(
-            ssh_url, "master",{
+            ssh_url, "master", {
               "--set-upstream": true
             },
             (err, result) => {
-              console.log("HAS ERROR?");
-              console.log(err);
-
-              console.log("HAS RESULT?");
-              console.log(result);
+              const fs = require('fs');
+              const files = fs.readdirSync(`./temp/${formattedAppName}`);
+              console.info("INFO: Cleaning up...");
+              if (Array.isArray(files) && (files.length > 0)) {
+                console.info(`INFO: removing '<somewhere>/temp/${formattedAppName}'`);
+                execSync('rm -rf ./temp/*', {
+                  cwd: './'
+                });
+              }
+              console.info("INFO: Cleanup completed.")
+              if (err) throw Error;
+              console.info("INFO: " + result);
             }
           );
-
+          console.info(`INFO: Push complete, application created at ${html_url}`);
           res.status(200).send({
             success: true,
             message: `Application created at ${html_url}`
           });
-        }).catch((error) => {
-          console.log("ERROR:");
-          console.log(error);
-        });
-
-      }
-    });
+        } catch (err) {
+          throw Error("Git init failed.")
+        }
+      }).catch(err => {
+        console.error(err);
+        res.status(500).send({
+          success: false,
+          message: "Application failed to initialize git."
+        })
+      });
+    }
   } else {
     res.status(422).send({
-      "success": false,
-      "message": "No `appName` defined."
+      success: false,
+      message: `No 'appName' defined.`
     });
   }
 });

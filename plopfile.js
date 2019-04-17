@@ -9,6 +9,5 @@ module.exports = function (plop) {
         templateFile: `plop-templates/metadata/README.md.hbs`
       }
     ]
-
   })
 };
