@@ -67,21 +67,21 @@ server.post('/create-app', async (req, res) => {
     // ::Flag:: to make sure we don't push up empty/non-existent projects.
     let appCreated = false;
     switch (formattedAppType) {
-      case "react":
-        console.info("INFO: appType has been identified as react.")
-        // We run create-react-app when type is react.
+      // case "react":
+      //   console.info("INFO: appType has been identified as react.")
+      //   break;
+      //   // We run create-react-app when type is react.
 
-        execSync(`npx create-react-app ./temp/${formattedAppName}`, {
-          cwd: './',
-          env: process.env
-        });
-        console.info("INFO: react-app created successfully.");
-        break;
-      case "spring":
-        console.info("INFO: appType has been identified as spring.");
-        break;
+      //   // execSync(`npx create-react-app ./temp/${formattedAppName}`, {
+      //   //   cwd: './',
+      //   //   env: process.env
+      //   // });
+      //   // console.info("INFO: react-app created successfully.");
+      // case "spring":
+      //   console.info("INFO: appType has been identified as spring.");
+      //   break;
       default:
-        console.info("INFO: appType not identified. Generating HelloWorld.");
+        console.info("INFO: Generating HelloWorld.");
         const generator = plop.getGenerator('HelloWorld');
         try {
           await generator.runActions({
