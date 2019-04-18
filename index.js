@@ -75,6 +75,7 @@ server.post('/create-app', async (req, res) => {
           cwd: './',
           env: process.env
         });
+        console.info("INFO: react-app created successfully.");
         break;
       case "spring":
         console.info("INFO: appType has been identified as spring.");
@@ -128,7 +129,7 @@ server.post('/create-app', async (req, res) => {
         has_wiki: false
       }).then((response) => {
         console.info(`INFO: Repository created; pushing...`);
-        const { html_url, ssh_url } = response.data;
+        const { html_url,    } = response.data;
 
         // Push the repository.
         try {
@@ -141,7 +142,7 @@ server.post('/create-app', async (req, res) => {
               const files = fs.readdirSync(`./temp/${formattedAppName}`);
               console.info("INFO: Cleaning up...");
               if (Array.isArray(files) && (files.length > 0)) {
-                console.info(`INFO: removing '<somewhere>/temp/${formattedAppName}'`);
+                console.info(`INFO: removing 'temp/${formattedAppName}'`);
                 execSync('rm -rf ./temp/*', {
                   cwd: './'
                 });
@@ -173,6 +174,10 @@ server.post('/create-app', async (req, res) => {
       message: `No 'appName' defined.`
     });
   }
+});
+
+server.get("/swag", (req, res) => {
+  res.sendFile("./easter-egg.html");
 });
 
 
