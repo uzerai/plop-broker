@@ -177,7 +177,15 @@ server.post('/create-app', async (req, res) => {
 });
 
 server.get("/swag", (req, res) => {
-  res.sendFile("./easter-egg.html");
+  res.sendFile("./easter-egg.html", {
+    root: `.`
+  });
+});
+
+server.get("/easteregg.gif", (req, res) => {
+  res.sendFile("./easteregg.gif", {
+    root: `.`
+  });
 });
 
 
